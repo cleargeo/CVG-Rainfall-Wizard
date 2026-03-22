@@ -75,3 +75,6 @@ rainfall_wizard/cache/*.pkl
 # Distribution
 dist/
 *.whl
+
+# Added by commit_all_repos.ps1
+.git_disabled/

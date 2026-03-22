@@ -1,0 +1,5 @@
+FROM cvg-rainfall-wizard:latest
+USER root
+COPY rainfall_wizard/ /app/rainfall_wizard/
+RUN pip install --no-cache-dir -e /app --no-deps --quiet
+USER rfwiz
