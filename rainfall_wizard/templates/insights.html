@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!-- =============================================================================
+     CVG Rainfall Wizard — Web UI: Insights Knowledge Base
+     Clearview Geographic LLC — Proprietary and Confidential
+     ADF Build: 1.0.x | HTML5 / Jinja2
+     ============================================================================= -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CVG Rainfall Wizard — Insights</title>
+  <style>
+    :root { --cvg-blue:#003366; --cvg-teal:#00a499; --cvg-light:#f5f7fa; --cvg-border:#d0d7de; --cvg-text:#1c2b3a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--cvg-light); color:var(--cvg-text); }
+    header { background:var(--cvg-blue); color:#fff; padding:1.25rem 2rem; display:flex; align-items:center; gap:1rem; }
+    header h1 { font-size:1.4rem; font-weight:600; }
+    header p { font-size:0.85rem; opacity:0.8; }
+    .container { max-width:800px; margin:2rem auto; padding:0 1rem; }
+    .card { background:#fff; border:1px solid var(--cvg-border); border-radius:8px; padding:1.5rem; margin-bottom:1.25rem; }
+    .card h2 { font-size:1.05rem; color:var(--cvg-blue); margin-bottom:0.75rem; border-bottom:2px solid var(--cvg-teal); padding-bottom:0.4rem; }
+    .card p { font-size:0.9rem; line-height:1.6; color:#333; }
+    input[type=text] { padding:0.55rem 0.85rem; border:1px solid var(--cvg-border); border-radius:4px; font-size:0.9rem; width:100%; }
+    input:focus { outline:none; border-color:var(--cvg-teal); box-shadow:0 0 0 2px rgba(0,164,153,0.2); }
+    .btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1.4rem; border:none; border-radius:4px; font-size:0.9rem; font-weight:600; cursor:pointer; }
+    .btn-primary { background:var(--cvg-teal); color:#fff; }
+    .btn-secondary { background:var(--cvg-blue); color:#fff; }
+    .btn:hover { opacity:0.88; }
+    .badge { display:inline-block; padding:0.2rem 0.5rem; border-radius:3px; font-size:0.78rem; font-weight:600; background:#e8f4fd; color:#1a6699; margin:0.1rem; }
+    .ref { font-size:0.8rem; color:#6c757d; font-style:italic; margin-top:0.5rem; }
+    .quick-topics { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:1rem; }
+    footer { text-align:center; font-size:0.78rem; color:#6c757d; padding:2rem 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>&#128218; CVG Rainfall Wizard — Engineering Insights</h1>
+    <p>Rainfall Analysis Knowledge Base &mdash; NOAA Atlas 14, NRCS TR-55, SCS Design Storms</p>
+  </div>
+  <a href="/" style="margin-left:auto; color:#fff; font-size:0.85rem; text-decoration:none;">&#8592; Back to Wizard</a>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Search Knowledge Base</h2>
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+      <input type="text" id="query" placeholder="e.g. curve number, Atlas 14, IDF curves, SCS Type II, return period ..."
+        onkeydown="if(event.key==='Enter') search()" />
+      <button class="btn btn-primary" onclick="search()">&#128269; Search</button>
+    </div>
+    <div class="quick-topics">
+      <span style="font-size:0.82rem; font-weight:600; color:#555; align-self:center;">Quick:</span>
+      {% for topic in ['Atlas 14','return period','curve number','IDF curves','SCS storm types','TR-55','compound flooding','climate change'] %}
+      <button class="btn btn-secondary" style="padding:0.3rem 0.75rem; font-size:0.8rem;"
+        onclick="loadTopic('{{ topic }}')">{{ topic }}</button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="results">
+    {% if results %}
+      {% for r in results %}
+      <div class="card">
+        <h2>{{ r.title }}</h2>
+        <p>{{ r.content }}</p>
+        {% if r.tags %}
+        <div style="margin-top:0.75rem;">
+          {% for tag in r.tags %}<span class="badge">{{ tag }}</span>{% endfor %}
+        </div>
+        {% endif %}
+        {% if r.reference %}<p class="ref">Ref: {{ r.reference }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    {% elif query %}
+      <div class="card"><p>No results found for <strong>{{ query }}</strong>. Try a different term.</p></div>
+    {% else %}
+      <div class="card"><p style="color:#666;">Enter a search term above or click a Quick topic to browse the Rainfall knowledge base.</p></div>
+    {% endif %}
+  </div>
+
+</div>
+
+<footer>CVG Rainfall Wizard &mdash; Clearview Geographic LLC &mdash; Proprietary &amp; Confidential</footer>
+
+<script>
+function search() {
+  const q = document.getElementById('query').value.trim();
+  if (q) window.location.href = '/api/insights?query=' + encodeURIComponent(q) + '&format=html';
+}
+function loadTopic(topic) {
+  document.getElementById('query').value = topic;
+  search();
+}
+</script>
+</body>
+</html>

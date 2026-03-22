@@ -1,0 +1,80 @@
+# =============================================================================
+# CVG Rainfall Wizard — Caddyfile
+# (c) Clearview Geographic, LLC — Proprietary
+# =============================================================================
+# Caddy automatically obtains and renews a Let's Encrypt TLS certificate for
+# the domain below.  No manual cert management required.
+#
+# Requirements before first start:
+#   1. DNS A record:  rainfall.cleargeo.tech  →  <host public IP>
+#   2. Port 80 + 443 reachable from the internet (for ACME challenge)
+#   3. Valid email in the global tls directive below
+# =============================================================================
+
+{
+    # Global options ──────────────────────────────────────────────────────────
+    # Email used for Let's Encrypt certificate registration & expiry alerts.
+    email azelenski@clearviewgeographic.com
+
+    # Uncomment to use Let's Encrypt staging while testing (avoids rate-limits)
+    # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# ── Primary public endpoint ───────────────────────────────────────────────
+rainfall.cleargeo.tech {
+
+    # Reverse-proxy to the FastAPI container on the internal Docker network.
+    # "rainfall-wizard" resolves via Docker's internal DNS (service name).
+    reverse_proxy rainfall-wizard:8020 {
+        # Health check — Caddy marks backend unhealthy if /health fails
+        health_uri      /health
+        health_interval 30s
+        health_timeout  10s
+
+        # Pass real client IP to API (for access logs / rate-limiting)
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Real-IP       {remote_host}
+    }
+
+    # Security headers ────────────────────────────────────────────────────────
+    header {
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        # Prevent MIME sniffing
+        X-Content-Type-Options "nosniff"
+        # Enable HSTS (1 year, include sub-domains)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Remove server header
+        -Server
+    }
+
+    # CORS — allow cross-origin requests for public API consumers
+    @options method OPTIONS
+    handle @options {
+        header Access-Control-Allow-Origin  "*"
+        header Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        header Access-Control-Allow-Headers "Content-Type, Authorization"
+        respond 204
+    }
+    header Access-Control-Allow-Origin "*"
+
+    # Structured access log
+    log {
+        output file /var/log/caddy/rainfall-access.log {
+            roll_size    50MiB
+            roll_keep    7
+            roll_keep_for 168h
+        }
+        format json
+    }
+
+    # Compress responses
+    encode gzip zstd
+}
+
+# ── Optional: redirect www variant ───────────────────────────────────────
+# www.rainfall.cleargeo.tech {
+#     redir https://rainfall.cleargeo.tech{uri} permanent
+# }

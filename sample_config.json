@@ -1,0 +1,17 @@
+{
+  "_comment": "CVG Rainfall Wizard — Sample configuration for run_rainfall_analysis()",
+  "lat": 24.556,
+  "lon": -81.807,
+  "duration_hr": 24,
+  "return_period_yr": 100,
+  "curve_number": 75,
+  "dem_path": "Z:/2019/1935_MonroeCounty/KeysDEM1m.tif",
+  "dem_unit": "m",
+  "output_path": "Z:/output/rainfall_depth_100yr.tif",
+  "output_unit": "ft",
+  "output_nodata": -9999.0,
+  "project_name": "monroe_county_rainfall_100yr",
+  "pfds_units": "english",
+  "min_depth": 0.0,
+  "notes": "Key West FL — NOAA Atlas 14 100-yr 24-hr storm, CN=75 mixed residential"
+}

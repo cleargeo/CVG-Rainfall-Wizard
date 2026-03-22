@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CVG Rainfall Wizard | Stormwater Precipitation Analysis | Clearview Geographic</title>
+<meta name="description" content="NOAA Atlas 14 precipitation frequency analysis for any U.S. location. Design storms, rainfall rasters, and return period depths for stormwater, drainage, and hydrologic professionals. GeoTIFF, JSON, and CSV outputs.">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f172a;--navy2:#1e293b;
+  --indigo:#6366f1;--indigo2:#4f46e5;
+  --purple:#8b5cf6;--sky:#38bdf8;
+  --green:#22c55e;--text:#e2e8f0;--muted:#94a3b8;--border:#334155;--card:#1e293b
+}
+html{scroll-behavior:smooth}
+body{background:var(--navy);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6;min-height:100vh;overflow-x:hidden}
+a{color:var(--indigo);text-decoration:none}
+a:hover{color:var(--indigo2);text-decoration:underline}
+
+nav{background:rgba(15,23,42,.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between}
+.nav-brand{font-weight:700;font-size:1.05rem;display:flex;align-items:center;gap:.6rem;color:#f0f9ff}
+.nav-links{display:flex;gap:1.25rem;font-size:.85rem;align-items:center}
+.nav-links a{color:var(--muted)}
+.nav-links a:hover{color:var(--indigo);text-decoration:none}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.hero{background:linear-gradient(160deg,#0a0e2a 0%,#12163a 50%,#0a0e1e 100%);padding:5rem 1.5rem 4rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(99,102,241,.22) 0%,transparent 65%);pointer-events:none}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);padding:.3rem 1rem;border-radius:9999px;font-size:.78rem;color:var(--indigo);margin-bottom:1.5rem;letter-spacing:.05em}
+.hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.12;background:linear-gradient(90deg,#f0f9ff 30%,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.25rem}
+.hero .sub{font-size:1.1rem;color:var(--muted);max-width:660px;margin:0 auto 2.5rem;line-height:1.65}
+.hero-emoji{font-size:4.5rem;margin-bottom:1rem;filter:drop-shadow(0 0 24px rgba(99,102,241,.55))}
+.btn-row{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;border-radius:.5rem;font-weight:600;font-size:.9rem;transition:all .18s;text-decoration:none}
+.btn-primary{background:var(--indigo);color:#fff}
+.btn-primary:hover{background:var(--indigo2);text-decoration:none;transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,.3)}
+.btn-outline{background:transparent;color:var(--indigo);border:1px solid var(--indigo)}
+.btn-outline:hover{background:rgba(99,102,241,.1);text-decoration:none}
+.btn-cta{background:var(--green);color:#052e16}
+.btn-cta:hover{background:#16a34a;text-decoration:none;transform:translateY(-2px)}
+
+.statbar{background:var(--navy2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.25rem 1.5rem;display:flex;gap:2rem;justify-content:center;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-val{font-size:1.4rem;font-weight:800;font-family:Consolas,monospace;color:var(--indigo)}
+.stat-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem}
+
+.C{max-width:1100px;margin:0 auto;padding:0 1.5rem}
+section{padding:4rem 0}
+.sec-h{font-size:1.65rem;font-weight:700;margin-bottom:.4rem}
+.sec-s{color:var(--muted);margin-bottom:2.5rem;font-size:.95rem;line-height:1.6}
+
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem}
+.feat-card{background:var(--card);border:1px solid var(--border);border-radius:.875rem;padding:1.5rem;transition:border-color .2s,transform .2s}
+.feat-card:hover{border-color:var(--indigo);transform:translateY(-3px)}
+.feat-icon{font-size:2rem;margin-bottom:.75rem}
+.feat-title{font-size:1rem;font-weight:700;margin-bottom:.4rem;color:#f0f9ff}
+.feat-desc{font-size:.85rem;color:var(--muted);line-height:1.6}
+
+.outputs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+.output-item{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;text-align:center}
+.output-icon{font-size:2.2rem;margin-bottom:.5rem}
+.output-name{font-weight:700;font-size:.95rem;color:#f0f9ff;margin-bottom:.25rem}
+.output-desc{font-size:.78rem;color:var(--muted)}
+
+/* ── Return periods ── */
+.rp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.875rem}
+.rp-card{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1rem;text-align:center}
+.rp-val{font-size:1.6rem;font-weight:800;font-family:Consolas,monospace;color:var(--indigo);line-height:1}
+.rp-yr{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:.25rem 0 .4rem}
+.rp-aep{font-size:.75rem;color:var(--muted)}
+
+/* ── Duration grid ── */
+.dur-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.875rem;margin-top:1.5rem}
+.dur-card{background:var(--navy2);border:1px solid var(--border);border-radius:.75rem;padding:1rem;text-align:center}
+.dur-val{font-size:1.4rem;font-weight:800;font-family:Consolas,monospace;color:var(--sky)}
+.dur-lbl{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+
+/* ── Who section ── */
+.who-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem}
+.who-card{background:var(--card);border-left:3px solid var(--indigo);border-radius:.5rem;padding:1.25rem}
+.who-title{font-weight:700;font-size:.95rem;color:#f0f9ff;margin-bottom:.5rem}
+.who-desc{font-size:.83rem;color:var(--muted);line-height:1.6}
+
+/* ── Steps ── */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.5rem;margin-top:1.5rem}
+.step{text-align:center;padding:1.5rem}
+.step-num{width:3rem;height:3rem;background:linear-gradient(135deg,var(--indigo),var(--indigo2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;margin:0 auto .75rem;color:#fff}
+.step-title{font-size:1rem;font-weight:700;margin-bottom:.4rem}
+.step-desc{font-size:.85rem;color:var(--muted);line-height:1.6}
+
+/* ── Spec ── */
+.spec-box{background:var(--card);border:1px solid var(--border);border-radius:.875rem;padding:1.5rem}
+.spec-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.spec-table tr{border-bottom:1px solid rgba(51,65,85,.5)}
+.spec-table tr:last-child{border:none}
+.spec-table td{padding:.45rem 0}
+.spec-table td:first-child{color:var(--muted);width:50%;padding-right:1rem}
+.spec-table td:last-child{font-family:Consolas,monospace;color:#f0f9ff}
+
+/* ── API ── */
+.api-box{background:var(--card);border:1px solid var(--border);border-radius:.875rem;padding:1.5rem}
+.api-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.api-table th{text-align:left;padding:.4rem .75rem;color:var(--muted);border-bottom:1px solid var(--border);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.api-table td{padding:.45rem .75rem;border-bottom:1px solid rgba(51,65,85,.4)}
+.api-table tr:last-child td{border:none}
+.method{display:inline-block;padding:.15rem .5rem;border-radius:.25rem;font-weight:700;font-size:.7rem;font-family:monospace}
+.m-get{background:rgba(99,102,241,.15);color:#818cf8}
+.m-post{background:rgba(56,189,248,.15);color:#38bdf8}
+.ep{color:var(--indigo);font-family:Consolas,monospace}
+.ed{color:var(--muted);font-family:sans-serif;font-size:.82rem}
+.health-bar{display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-family:Consolas,monospace;background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.2);padding:.6rem 1rem;border-radius:.5rem;margin-top:1rem;width:fit-content}
+
+/* ── CTA ── */
+.cta-band{background:linear-gradient(135deg,#0a0e2a,#12163a);border:1px solid rgba(99,102,241,.25);border-radius:1rem;padding:3rem 2rem;text-align:center;margin:2rem 0}
+.cta-band h2{font-size:1.75rem;font-weight:800;color:#f0f9ff;margin-bottom:.75rem}
+.cta-band p{color:var(--muted);max-width:580px;margin:0 auto 2rem;line-height:1.6}
+
+/* ── Suite ── */
+.suite-bar{background:rgba(15,23,42,.6);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;text-align:center;margin-top:2rem}
+.suite-bar p{font-size:.85rem;color:var(--muted);margin-bottom:.75rem}
+.suite-bar a{display:inline-block;margin:.25rem .5rem;padding:.35rem .9rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:9999px;font-size:.8rem;color:var(--indigo);text-decoration:none}
+.suite-bar a:hover{background:rgba(99,102,241,.2);text-decoration:none}
+
+/* ── Trust strip + Price band ── */
+.trust-strip{background:#0a0b1e;border-bottom:1px solid var(--border);padding:.875rem 1.5rem;display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;align-items:center}
+.trust-item{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted)}
+.trust-item strong{color:#f0f9ff}
+.price-band{background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(34,197,94,.04));border:1px solid rgba(34,197,94,.2);border-radius:.875rem;padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-top:2rem}
+.price-left h3{font-size:1.25rem;font-weight:800;color:#f0f9ff;margin-bottom:.25rem}
+.price-left p{font-size:.85rem;color:var(--muted);max-width:460px;line-height:1.5}
+.price-range{font-size:1.75rem;font-weight:800;color:var(--green);font-family:Consolas,monospace}
+.price-note{font-size:.75rem;color:var(--muted);text-align:right}
+
+footer{background:var(--card);border-top:1px solid var(--border);padding:2rem 1.5rem;text-align:center;font-size:.8rem;color:var(--muted)}
+.footer-brand{font-weight:700;color:#e2e8f0;margin-bottom:.4rem;font-size:.95rem}
+
+@media(max-width:768px){
+  .nav-links{display:none}
+  .statbar{gap:1rem}
+  .hero h1{font-size:2rem}
+  .cta-band{padding:2rem 1rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand"><span>🌧️</span> CVG Rainfall Wizard</div>
+  <div class="nav-links">
+    <a href="/docs">API Docs</a>
+    <a href="/health">Health</a>
+    <a href="https://www.clearviewgeographic.com" target="_blank">Clearview Geographic</a>
+    <span class="live-dot"></span>
+    <span style="font-size:.8rem;color:var(--green)" id="hb">LIVE</span>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-emoji">🌧️</div>
+  <div class="hero-eyebrow">NOAA Atlas 14 · PFDS Precipitation Frequency · CONUS Coverage · GeoTIFF Output</div>
+  <h1>Stormwater Precipitation Analysis<br>for Any U.S. Location</h1>
+  <p class="sub">
+    Instantaneous design storm depths, gridded rainfall rasters, and NOAA Atlas 14 frequency data
+    for any point or bounding box in the continental United States.
+    Built for stormwater engineers, hydraulic modelers, and drainage professionals who need
+    defensible precipitation inputs — fast.
+  </p>
+  <div class="btn-row">
+    <a href="https://www.clearviewgeographic.com/contact" class="btn btn-cta" target="_blank">📋 Request a Demo</a>
+    <a href="/docs" class="btn btn-primary">📄 API Documentation</a>
+    <a href="/health" class="btn btn-outline">✓ System Status</a>
+  </div>
+</section>
+
+<!-- ── Stats ── -->
+<div class="statbar">
+  <div class="stat"><div class="stat-val">CONUS</div><div class="stat-lbl">Coverage Area</div></div>
+  <div class="stat"><div class="stat-val">6</div><div class="stat-lbl">Return Periods</div></div>
+  <div class="stat"><div class="stat-val">5</div><div class="stat-lbl">Storm Durations</div></div>
+  <div class="stat"><div class="stat-val">~1 km</div><div class="stat-lbl">Grid Resolution</div></div>
+  <div class="stat"><div class="stat-val">Atlas 14</div><div class="stat-lbl">NOAA Data Source</div></div>
+  <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Output Formats</div></div>
+</div>
+
+<!-- ── Trust / Social Proof Strip ── -->
+<div class="trust-strip">
+  <div class="trust-item">✅ <strong>Alex Zelenski, GISP</strong> — GISP Certified Lead</div>
+  <div class="trust-item">📊 <strong>49+</strong> Flood Assessments Delivered</div>
+  <div class="trust-item">⭐ <strong>4.9 / 5</strong> — 156+ Clients</div>
+  <div class="trust-item">💰 <strong>$2.5M+</strong> Revenue Proven</div>
+  <div class="trust-item">⚡ Quote in <strong>4 Hours</strong> &bull; <a href="tel:+13869572314" style="color:#818cf8">(386) 957-2314</a></div>
+</div>
+
+<div class="C">
+
+  <!-- ── What It Does ── -->
+  <section>
+    <h2 class="sec-h">🎯 What the Rainfall Wizard Delivers</h2>
+    <p class="sec-s">
+      NOAA Atlas 14-sourced precipitation frequency data — point depths, gridded rasters, and full design storm
+      hyetographs — all via REST API. Eliminate manual PFDS lookups, GIS processing, and spreadsheet interpolation.
+      Get your design storm inputs in seconds, not hours.
+    </p>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">NOAA Atlas 14 Integration</div>
+        <div class="feat-desc">Official PFDS precipitation frequency estimates for all NOAA Atlas 14 regions across CONUS. Point depths and confidence intervals retrieved directly from NOAA data services — always current.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔄</div>
+        <div class="feat-title">Return Period Analysis</div>
+        <div class="feat-desc">Design storm depths for 2-, 5-, 10-, 25-, 50-, and 100-year recurrence intervals. All six return periods in a single API call — ready for hydrologic modeling and regulatory submittals.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">⏱️</div>
+        <div class="feat-title">Multi-Duration Support</div>
+        <div class="feat-desc">Storm durations from 1-hour to 24-hour in standard hydrologic increments. Matches design criteria for detention basin sizing, culvert analysis, and municipal stormwater compliance.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🗺️</div>
+        <div class="feat-title">Spatial Rainfall Rasters</div>
+        <div class="feat-desc">Generate gridded precipitation depth rasters from PFDS interpolation across any bounding box. GeoTIFF output at ~1km resolution, suitable for watershed-level hydrologic modeling inputs.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌊</div>
+        <div class="feat-title">Design Storm Generation</div>
+        <div class="feat-desc">Full synthetic hyetograph generation using Huff quartile and SCS Type I, II, and III temporal distributions. Ready-to-use inputs for HEC-HMS, SWMM, ICPR, HydroCAD, and other models.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔗</div>
+        <div class="feat-title">Compound Flood Integration</div>
+        <div class="feat-desc">Pair rainfall inputs with Sea Level Rise and Storm Surge Wizards for compound flood analysis — simultaneous tidal surge + overland rainfall inundation for FEMA resilience documentation.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Deliverables ── -->
+  <section>
+    <h2 class="sec-h">📦 Deliverable Outputs</h2>
+    <p class="sec-s">Every analysis returns structured data ready for import into your hydraulic model, GIS, or report.</p>
+    <div class="outputs-grid">
+      <div class="output-item">
+        <div class="output-icon">🗂️</div>
+        <div class="output-name">Precipitation GeoTIFF</div>
+        <div class="output-desc">Gridded rainfall depth raster at ~1km, EPSG:4326, COG-formatted for ArcGIS / QGIS import</div>
+      </div>
+      <div class="output-item">
+        <div class="output-icon">📋</div>
+        <div class="output-name">Point Depth Table</div>
+        <div class="output-desc">JSON or CSV depth table — all return periods × all durations for exact lat/lon coordinates</div>
+      </div>
+      <div class="output-item">
+        <div class="output-icon">📈</div>
+        <div class="output-name">Design Storm Hyetograph</div>
+        <div class="output-desc">Time-step rainfall distribution (Huff / SCS Type I–III) formatted for HEC-HMS, SWMM, ICPR</div>
+      </div>
+      <div class="output-item">
+        <div class="output-icon">📊</div>
+        <div class="output-name">IDF Curve Data</div>
+        <div class="output-desc">Intensity-Duration-Frequency values across all return periods and storm durations</div>
+      </div>
+      <div class="output-item">
+        <div class="output-icon">🗃️</div>
+        <div class="output-name">Multiple Formats</div>
+        <div class="output-desc">Output in GeoTIFF, CSV, JSON, or NetCDF — your choice. Optimized for GIS, modeling, and reporting</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Return Periods ── -->
+  <section>
+    <h2 class="sec-h">🌀 Return Periods &amp; Storm Durations</h2>
+    <p class="sec-s">All standard design storm recurrence intervals, from routine drainage design to critical infrastructure protection.</p>
+    <div class="rp-grid">
+      <div class="rp-card">
+        <div class="rp-val">2</div><div class="rp-yr">Year Return Period</div>
+        <div class="rp-aep">50% AEP — Minor drainage</div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-val">5</div><div class="rp-yr">Year Return Period</div>
+        <div class="rp-aep">20% AEP — Urban design storm</div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-val">10</div><div class="rp-yr">Year Return Period</div>
+        <div class="rp-aep">10% AEP — Local stormwater</div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-val">25</div><div class="rp-yr">Year Return Period</div>
+        <div class="rp-aep">4% AEP — Major drainage / NPDES</div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-val">50</div><div class="rp-yr">Year Return Period</div>
+        <div class="rp-aep">2% AEP — Highway / regional</div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-val">100</div><div class="rp-yr">Year Return Period</div>
+        <div class="rp-aep">1% AEP — FEMA base flood</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:1.1rem;font-weight:700;margin-top:2.5rem;margin-bottom:.4rem">Storm Durations</h3>
+    <p style="color:var(--muted);font-size:.875rem;margin-bottom:.5rem">Standard durations covering all common hydraulic design criteria.</p>
+    <div class="dur-grid">
+      <div class="dur-card"><div class="dur-val">1 hr</div><div class="dur-lbl">Short-Duration</div></div>
+      <div class="dur-card"><div class="dur-val">3 hr</div><div class="dur-lbl">Urban Design</div></div>
+      <div class="dur-card"><div class="dur-val">6 hr</div><div class="dur-lbl">Sub-Catchment</div></div>
+      <div class="dur-card"><div class="dur-val">12 hr</div><div class="dur-lbl">Watershed Stormwater</div></div>
+      <div class="dur-card"><div class="dur-val">24 hr</div><div class="dur-lbl">FEMA &amp; NRCS Standard</div></div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ── -->
+  <section>
+    <h2 class="sec-h">⚙️ How It Works</h2>
+    <p class="sec-s">Three steps from coordinates to design storm — no PFDS lookups, no GIS interpolation, no spreadsheets.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Set Your Location</div>
+        <div class="step-desc">Provide a lat/lon point or bounding box AOI. The engine automatically identifies the applicable NOAA Atlas 14 region and nearest PFDS grid nodes.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Select Design Criteria</div>
+        <div class="step-desc">Choose return period(s), storm duration(s), and hyetograph distribution (Huff / SCS Type). Optionally request a spatial raster output for watershed-wide analysis.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Retrieve &amp; Model</div>
+        <div class="step-desc">Download depth tables (CSV/JSON), gridded rasters (GeoTIFF), or full hyetographs (JSON). Import directly into HEC-HMS, SWMM, ICPR, or any standard hydrology platform.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Who Uses This ── -->
+  <section>
+    <h2 class="sec-h">👥 Who Uses the Rainfall Wizard</h2>
+    <p class="sec-s">Built for water resources professionals who need NOAA Atlas 14 data without the manual lookup workflow.</p>
+    <div class="who-grid">
+      <div class="who-card">
+        <div class="who-title">🏗️ Civil &amp; Water Resources Engineers</div>
+        <div class="who-desc">Design storm depths for detention basin sizing, retention pond design, culvert analysis, and roadway drainage. NOAA Atlas 14-compliant inputs accepted by SFWMD, FDOT, USACE, and municipal review.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-title">🌊 Stormwater &amp; Drainage Professionals</div>
+        <div class="who-desc">Rapid PFDS lookups for NPDES permit support, municipal separate storm sewer system (MS4) compliance, and stormwater master plan development across any CONUS jurisdiction.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-title">🏛️ Municipal &amp; County Engineers</div>
+        <div class="who-desc">Batch precipitation frequency data for drainage atlas updates, capital improvement planning, and FEMA CRS program documentation. REST API integrates with GIS and asset management platforms.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-title">🌍 Environmental &amp; Ecological Consultants</div>
+        <div class="who-desc">Design storm hydrology for wetland impact analysis, mitigation sizing, and USACE Section 404/401 permit support. Compound rainfall + SLR analysis for coastal wetland vulnerability assessments.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-title">📊 Hydrologic Modelers</div>
+        <div class="who-desc">Atlas 14-based forcing data for HEC-HMS, EPA SWMM, ICPR, and HydroCAD models. Watershed-scale rainfall rasters as model inputs — replacing manual GIS interpolation workflows.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-title">🏫 Academic &amp; Research Programs</div>
+        <div class="who-desc">Reproducible NOAA Atlas 14-sourced precipitation inputs for hydrology research, climate impact studies, and stormwater infrastructure resilience analysis.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Technical Specs ── -->
+  <section>
+    <h2 class="sec-h">⚙️ Technical Specifications</h2>
+    <p class="sec-s">Production-grade precipitation frequency analysis on NOAA Atlas 14 data with cloud-native output delivery.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem">
+      <div class="spec-box">
+        <h3 style="font-size:.8rem;color:var(--indigo);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem">Output Specifications</h3>
+        <table class="spec-table">
+          <tr><td>Raster format</td><td>GeoTIFF / COG</td></tr>
+          <tr><td>Raster CRS</td><td>EPSG:4326 (WGS84)</td></tr>
+          <tr><td>Raster resolution</td><td>~1 km (Atlas 14 native)</td></tr>
+          <tr><td>Tabular formats</td><td>JSON, CSV</td></tr>
+          <tr><td>Grid format</td><td>NetCDF (optional)</td></tr>
+          <tr><td>Hyetograph</td><td>JSON time-step array</td></tr>
+        </table>
+      </div>
+      <div class="spec-box">
+        <h3 style="font-size:.8rem;color:var(--indigo);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem">Data Sources</h3>
+        <table class="spec-table">
+          <tr><td>Precipitation data</td><td>NOAA Atlas 14 PFDS</td></tr>
+          <tr><td>Return periods</td><td>2, 5, 10, 25, 50, 100-yr</td></tr>
+          <tr><td>Storm durations</td><td>1, 3, 6, 12, 24-hr</td></tr>
+          <tr><td>Distributions</td><td>Huff / SCS Type I, II, III</td></tr>
+          <tr><td>AOI input</td><td>lat/lon point or bbox</td></tr>
+          <tr><td>Coverage</td><td>CONUS (all Atlas 14 regions)</td></tr>
+        </table>
+      </div>
+      <div class="spec-box">
+        <h3 style="font-size:.8rem;color:var(--indigo);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem">Platform</h3>
+        <table class="spec-table">
+          <tr><td>API framework</td><td>FastAPI + Python 3.11+</td></tr>
+          <tr><td>Processing</td><td>NumPy / SciPy / GDAL</td></tr>
+          <tr><td>Proxy / TLS</td><td>Caddy v2 (auto HTTPS)</td></tr>
+          <tr><td>Container</td><td>Docker (Ubuntu 22.04)</td></tr>
+          <tr><td>Version</td><td>v1.1.0</td></tr>
+          <tr><td>Auth</td><td>API key (contact for access)</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── API Reference ── -->
+  <section>
+    <h2 class="sec-h">🔗 API Reference</h2>
+    <p class="sec-s">RESTful endpoints for point lookups, spatial rasters, and design storms. Full interactive documentation at <a href="/docs">/docs</a>.</p>
+    <div class="api-box">
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method m-post">POST</span></td><td class="ep">/precipitation/point</td><td class="ed">Atlas 14 depth lookup for a lat/lon — all return periods and durations</td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="ep">/precipitation/raster</td><td class="ed">Generate gridded rainfall depth raster for a bounding box AOI</td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="ep">/design-storm</td><td class="ed">Generate design storm hyetograph (Huff / SCS) for a given return period</td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="ep">/idf/point</td><td class="ed">Intensity-Duration-Frequency table for a location</td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="ep">/atlas14/regions</td><td class="ed">List NOAA Atlas 14 volume regions with coverage extents</td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="ep">/health</td><td class="ed">Service health check — version, uptime, system status</td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="ep">/docs</td><td class="ed">Interactive Swagger UI — explore and test all endpoints</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
+        <a href="/docs" class="btn btn-outline" style="font-size:.8rem">📄 Swagger UI</a>
+        <a href="/openapi.json" class="btn btn-outline" style="font-size:.8rem">{} OpenAPI JSON</a>
+        <a href="/health" class="btn btn-outline" style="font-size:.8rem">✓ Health Check</a>
+      </div>
+      <div class="health-bar"><span class="live-dot"></span><span id="ht">Checking service health…</span></div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <div class="cta-band">
+    <h2>⏱️ Stop Looking Up Atlas 14 Data Manually</h2>
+    <p>
+      Let CVG's precipitation analysis platform handle your NOAA Atlas 14 lookups, raster generation,
+      and design storm hyetographs. Our GISP-certified team will scope your project, confirm
+      Atlas 14 region coverage, and quote your project. <strong style="color:#f0f9ff">Typically quoted within 4 hours.</strong>
+    </p>
+    <div class="price-band">
+      <div class="price-left">
+        <h3>Precipitation Analysis Projects</h3>
+        <p>NOAA Atlas 14 PFDS point lookups, watershed rasters, design storm hyetographs, and IDF curve generation across all standard return periods and durations for any CONUS location.</p>
+      </div>
+      <div>
+        <div class="price-range">$2,500 – $10,000</div>
+        <div class="price-note">Typical project range &bull; Custom quotes available<br>📞 <a href="tel:+13869572314" style="color:#22c55e">(386) 957-2314 x101</a></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:1.5rem">
+      <a href="https://www.clearviewgeographic.com/contact" class="btn btn-cta" target="_blank">📋 Get a Free Project Quote</a>
+      <a href="tel:+13869572314" class="btn btn-outline">📞 Call (386) 957-2314</a>
+      <a href="mailto:services@clearviewgeographic.com" class="btn btn-outline">✉️ Email Our Team</a>
+    </div>
+    <p style="margin-top:1.25rem;font-size:.8rem;color:var(--muted)">
+      📍 DeLand, Florida &bull; Government Contract Experience &bull; Enterprise Pricing Available &bull;
+      <a href="mailto:services@clearviewgeographic.com" style="color:var(--indigo)">services@clearviewgeographic.com</a>
+    </p>
+  </div>
+
+  <!-- ── Suite ── -->
+  <div class="suite-bar">
+    <p>Part of the <strong>CVG Flood Intelligence Suite</strong> — compound flood analysis across surge, sea level rise, and precipitation</p>
+    <a href="https://storm-surge.cleargeo.tech">🌊 Storm Surge Wizard</a>
+    <a href="https://slr.cleargeo.tech">🌍 SLR Wizard</a>
+    <a href="https://rainfall.cleargeo.tech">🌧️ Rainfall Wizard</a>
+    <a href="https://status.cleargeo.tech">📡 Platform Status</a>
+    <a href="https://www.clearviewgeographic.com" target="_blank">🏢 Clearview Geographic</a>
+  </div>
+
+</div><!-- /.C -->
+
+<footer>
+  <div class="footer-brand">🌧️ CVG Rainfall Wizard — rainfall.cleargeo.tech</div>
+  <div>
+    &copy; 2026 <a href="https://www.clearviewgeographic.com" target="_blank">Clearview Geographic, LLC</a> &bull;
+    GISP Certified &bull; CVG Flood Intelligence Suite &bull; DeLand, Florida &bull; v1.1.0
+  </div>
+  <div style="margin-top:.5rem">
+    <a href="https://storm-surge.cleargeo.tech">Storm Surge</a> &bull;
+    <a href="https://slr.cleargeo.tech">SLR Wizard</a> &bull;
+    <a href="https://cleargeo.tech/products.html" target="_blank">CVG Products</a> &bull;
+    <a href="mailto:services@clearviewgeographic.com">services@clearviewgeographic.com</a> &bull;
+    <a href="https://www.clearviewgeographic.com/contact" target="_blank">Contact</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  fetch('/health').then(function(r){return r.json();}).then(function(j){
+    var t=document.getElementById('ht');
+    if(t) t.textContent='Service '+j.status+' — v'+(j.version||'?')+' — uptime '+(j.uptime||'?');
+    var b=document.getElementById('hb');
+    if(b){b.textContent='LIVE';b.style.color='#22c55e';}
+  }).catch(function(){
+    var t=document.getElementById('ht');
+    if(t) t.textContent='API unreachable — contact support';
+  });
+})();
+</script>
+</body>
+</html>

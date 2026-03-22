@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<!-- CVG Rainfall Wizard -- Result Page -->
+<!-- Clearview Geographic LLC -- Proprietary and Confidential -->
+<!-- ADF Build: 1.0.x | HTML5 / Jinja2 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CVG Rainfall Wizard — Results</title>
+  <style>
+    :root{--primary:#005ea2;--accent:#00a3a6;--bg:#f5f7fa;--surface:#fff;--border:#d0d7de;--text:#1c2b3a;--muted:#5a6e80;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;}
+    .site-header{background:var(--primary);color:#fff;padding:.75rem 2rem;display:flex;align-items:center;}
+    .site-header h1{font-size:1.3rem;font-weight:700;}
+    .back-link{margin-left:auto;color:rgba(255,255,255,.88);font-size:.85rem;text-decoration:none;}
+    .back-link:hover{color:#fff;}
+    .main{max-width:900px;margin:2rem auto 3rem;padding:0 1.25rem;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+    .card-header{display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:2px solid var(--accent);}
+    .card-header h2{font-size:1rem;font-weight:700;color:var(--primary);}
+    .status-ok{background:#e9f9e9;border:1px solid #c3e6c3;color:#1b5e20;border-radius:6px;padding:.75rem 1rem;margin-bottom:1.25rem;font-weight:600;font-size:.9rem;}
+    .status-err{background:#fdecea;border:1px solid #f5c6cb;color:#8b0000;border-radius:6px;padding:.75rem 1rem;margin-bottom:1.25rem;font-weight:600;font-size:.9rem;}
+    table{width:100%%;border-collapse:collapse;font-size:.9rem;}
+    th{background:var(--primary);color:#fff;padding:.5rem .85rem;text-align:left;width:40%%;}
+    td{padding:.45rem .85rem;border-bottom:1px solid var(--border);}
+    tr:nth-child(even) td{background:#f8fafc;}
+    .highlight td{font-weight:700;color:var(--primary);background:#e8f4ff;}
+    code{background:#f0f4f8;padding:.1rem .4rem;border-radius:3px;font-family:"Consolas",monospace;font-size:.83em;}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.2rem;border:none;border-radius:5px;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:#008082;}
+    .btn-secondary{background:var(--primary);color:#fff;}
+    .btn-secondary:hover{background:#004681;}
+    .meta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1.25rem;}
+    .meta-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.75rem 1rem;text-align:center;}
+    .meta-box .val{font-size:1.4rem;font-weight:700;color:var(--primary);}
+    .meta-box .lbl{font-size:.75rem;color:var(--muted);margin-top:.15rem;}
+    .idf-table{width:100%%;border-collapse:collapse;font-size:.82rem;overflow-x:auto;}
+    .idf-table th{background:var(--primary);color:#fff;padding:.4rem .6rem;text-align:right;}
+    .idf-table th:first-child{text-align:left;}
+    .idf-table td{padding:.35rem .6rem;border-bottom:1px solid var(--border);text-align:right;}
+    .idf-table td:first-child{text-align:left;font-weight:600;}
+    .idf-table tr.active-row td{background:#e8f4ff;font-weight:700;}
+    .idf-table tr:nth-child(even) td{background:#f8fafc;}
+    .idf-table tr.active-row:nth-child(even) td{background:#d4eaff;}
+    .reg-note{background:#fff8e1;border-left:4px solid #f9a825;padding:.75rem 1rem;border-radius:0 6px 6px 0;font-size:.82rem;color:#4a3800;margin-top:1rem;}
+    .action-row{display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap;align-items:center;}
+    .site-footer{text-align:center;font-size:.78rem;color:var(--muted);padding:2rem 1rem;border-top:1px solid var(--border);}
+    @media(max-width:640px){.meta-grid{grid-template-columns:1fr 1fr;}.main{padding:0 .75rem;}}
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div>
+    <h1>&#127783; CVG Rainfall Wizard &mdash; Results</h1>
+  </div>
+  <a href="/" class="back-link">&#8592; New Analysis</a>
+</header>
+
+<main class="main">
+
+  {% if error %}
+  <div class="status-err">&#10060; Analysis Failed: {{ error }}</div>
+  {% else %}
+  <div class="status-ok">&#10003; Analysis Complete</div>
+  {% endif %}
+
+  <!-- Key Metrics Cards -->
+  <div class="meta-grid">
+    <div class="meta-box">
+      <div class="val">{{ return_period_yr }}-yr</div>
+      <div class="lbl">Return Period</div>
+    </div>
+    <div class="meta-box">
+      <div class="val">{{ duration_hr }}-hr</div>
+      <div class="lbl">Storm Duration</div>
+    </div>
+    <div class="meta-box">
+      <div class="val">{% if rainfall_in %}{{ rainfall_in }}"{% else %}&mdash;{% endif %}</div>
+      <div class="lbl">Rainfall Depth (in)</div>
+    </div>
+  </div>
+
+  <!-- NOAA PFDS Results -->
+  <div class="card">
+    <div class="card-header">
+      <h2>&#127783; NOAA Precipitation Frequency Results</h2>
+    </div>
+    <table>
+      <tr><th>Site Coordinates</th><td>{{ lat }}, {{ lon }}{% if project_name %} &mdash; {{ project_name }}{% endif %}</td></tr>
+      <tr><th>Return Period (ARI)</th><td>{{ return_period_yr }}-year ({{ (1/return_period_yr * 100)|round(2) }}%% annual chance)</td></tr>
+      <tr><th>Storm Duration</th><td>{{ duration_hr }}-hour</td></tr>
+      {% if rainfall_in %}
+      <tr class="highlight"><th>Rainfall Depth</th><td><strong>{{ rainfall_in }} inches</strong> ({{ (rainfall_in * 25.4)|round(1) }} mm)</td></tr>
+      <tr><th>Rainfall Intensity</th><td>{{ (rainfall_in / duration_hr)|round(3) }} in/hr</td></tr>
+      {% else %}
+      <tr><th>Rainfall Depth</th><td><em>Not available{% if error %} &mdash; {{ error }}{% endif %}</em></td></tr>
+      {% endif %}
+      <tr><th>Data Source</th><td>NOAA Atlas 14 (PFDS) &mdash; Partial Duration Series</td></tr>
+    </table>
+  </div>
+
+  <!-- NRCS Runoff Results -->
+  {% if runoff_in is not none %}
+  <div class="card">
+    <div class="card-header">
+      <h2>&#128167; NRCS TR-55 Runoff Results</h2>
+    </div>
+    <table>
+      <tr><th>Curve Number (CN)</th><td>{{ curve_number }}</td></tr>
+      <tr><th>Design Rainfall (P)</th><td>{{ rainfall_in }} in</td></tr>
+      <tr><th>Potential Max Retention (S)</th><td>{{ (1000/curve_number - 10)|round(3) }} in</td></tr>
+      <tr><th>Initial Abstraction (Ia = 0.2S)</th><td>{{ (0.2 * (1000/curve_number - 10))|round(3) }} in</td></tr>
+      <tr class="highlight"><th>Direct Runoff (Q)</th><td><strong>{{ runoff_in }} inches</strong></td></tr>
+      {% if peak_flow_cfs is not none %}
+      <tr class="highlight"><th>Estimated Peak Flow</th><td><strong>{{ peak_flow_cfs }} cfs</strong></td></tr>
+      {% endif %}
+      {% if drainage_area_acres %}
+      <tr><th>Drainage Area</th><td>{{ drainage_area_acres }} acres</td></tr>
+      {% endif %}
+    </table>
+  </div>
+  {% elif curve_number %}
+  <div class="card">
+    <div class="card-header"><h2>&#128167; NRCS TR-55 Runoff</h2></div>
+    <p style="color:var(--muted);font-size:.9rem;">Runoff could not be computed. Ensure CN is between 1-100 and rainfall depth is available.</p>
+  </div>
+  {% endif %}
+
+  <!-- IDF Table -->
+  {% if idf_table %}
+  <div class="card">
+    <div class="card-header">
+      <h2>&#128200; IDF Data &mdash; All Durations at {{ return_period_yr }}-Year Return Period</h2>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="idf-table">
+        <thead>
+          <tr>
+            <th>Duration</th>
+            {% for rp in idf_table.return_periods %}<th>{{ rp }}-yr</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for dur, depths in idf_table.rows.items() %}
+          <tr{% if dur == (duration_hr|string + 'hr') or dur == (duration_hr|string + 'h') %} class="active-row"{% endif %}>
+            <td>{{ dur }}</td>
+            {% for rp in idf_table.return_periods %}
+            <td>{{ depths.get(rp|string, '&mdash;') }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:.5rem;">Units: inches | Source: NOAA Atlas 14 | Bold row = selected duration</p>
+  </div>
+  {% endif %}
+
+  <!-- Regulatory Context -->
+  <div class="card">
+    <div class="card-header">
+      <h2>&#128203; Regulatory Context</h2>
+    </div>
+    <table>
+      <tr><th>FEMA NFIP</th><td>The 100-year (1%% ACE) storm is the base flood for FEMA FIRM panels and SFHA delineation (Zones A, AE, AH, AO).</td></tr>
+      <tr><th>ASCE 7-22</th><td>Risk Category II: Use 100-yr MRI; RC IV critical facilities: 2,475-yr MRI.</td></tr>
+      <tr><th>NRCS TR-55</th><td>CN method is appropriate for rural and urban watersheds &lt;2,000 acres with Tc of 0.1&ndash;10 hours.</td></tr>
+      <tr><th>Atlas 14 Coverage</th><td>NOAA Atlas 14 covers all 50 US states and Puerto Rico. Data sourced from PFDS v2 PDS fitting.</td></tr>
+    </table>
+    <div class="reg-note">&#9888;&#65039; <strong>Engineering Disclaimer:</strong> Results are for planning and preliminary design only. Final design requires licensed PE review, site-specific hydrologic analysis, and compliance with local stormwater ordinances.</div>
+  </div>
+
+  <div class="action-row">
+    <a href="/" class="btn btn-primary">&#8592; New Analysis</a>
+    <a href="/docs" target="_blank" class="btn btn-secondary">API Docs</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  CVG Rainfall Wizard v{{ version }} &mdash; &copy; Clearview Geographic, LLC &mdash; Proprietary &amp; Confidential &mdash; NOAA Atlas 14 &bull; NRCS TR-55
+</footer>
+</body>
+</html>

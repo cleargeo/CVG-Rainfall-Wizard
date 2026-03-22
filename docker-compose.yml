@@ -1,0 +1,30 @@
+# =============================================================================
+# (c) Clearview Geographic LLC -- All Rights Reserved | Est. 2018
+# CVG Rainfall Wizard — Docker Compose (development)
+# =============================================================================
+version: "3.9"
+
+services:
+  rainfall-wizard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cvg-rainfall-wizard:dev
+    container_name: rainfall-wizard-dev
+    ports:
+      - "8020:8020"
+    volumes:
+      - .:/app
+      - rainfall_output:/app/output
+    environment:
+      - RAINFALL_OUTPUT_DIR=/app/output
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8020/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  rainfall_output:

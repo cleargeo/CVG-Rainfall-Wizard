@@ -1,0 +1,106 @@
+# CVG Rainfall Wizard — Production Stack
+# Deploys on CVG infrastructure: rainfall.cleargeo.tech
+# Run: docker compose -f docker-compose.prod.yml up -d
+# Caddy handles TLS via Let's Encrypt (HTTP-01 challenge)
+
+x-restart: &restart
+  restart: unless-stopped
+
+x-labels-rfw: &labels-rfw
+  com.cvg.service: rainfall-wizard
+  com.cvg.domain: cleargeo.tech
+  com.cvg.tier: application
+
+services:
+
+  # ── Rainfall Wizard (FastAPI) ───────────────────────────────────────────────
+  rainfall-wizard:
+    <<: *restart
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cvg/rainfall-wizard:latest
+    container_name: rfw-api
+    # Override Dockerfile CMD port (8002) to match compose healthcheck (8020)
+    command: ["uvicorn", "rainfall_wizard.web_api:create_app",
+              "--factory", "--host", "0.0.0.0", "--port", "8020",
+              "--workers", "2", "--log-level", "info"]
+    expose:
+      - "8020"
+    volumes:
+      - rfw-data:/app/data
+      - /mnt/cgps:/mnt/cgps:ro          # TrueNAS CGPS share (read-only)
+      - /mnt/cgdp:/mnt/cgdp:ro          # TrueNAS CGDP share (read-only)
+    environment:
+      - RFW_ENV=production
+      - RFW_HOST=0.0.0.0
+      - RFW_PORT=8020
+      - RFW_RELOAD=false
+      - RFW_LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8020/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      <<: *labels-rfw
+    networks:
+      - web
+      - internal
+
+  # ── Caddy (Reverse Proxy + TLS) ─────────────────────────────────────────────
+  caddy:
+    <<: *restart
+    image: caddy:2-alpine
+    container_name: caddy-rfw
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - rainfall-wizard
+    labels:
+      com.cvg.service: caddy
+    networks:
+      - web
+
+  # ── Watchtower (Auto-update containers) ─────────────────────────────────────
+  watchtower:
+    <<: *restart
+    image: containrrr/watchtower:latest
+    container_name: watchtower-rfw
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=86400   # Check daily
+      - WATCHTOWER_INCLUDE_STOPPED=false
+      - WATCHTOWER_LABEL_ENABLE=false
+      - TZ=America/New_York
+      - DOCKER_API_VERSION=1.41          # Fix: watchtower client too old for Docker CE 29
+    labels:
+      com.cvg.service: watchtower
+    networks:
+      - internal
+
+networks:
+  web:
+    name: cvg-web
+    driver: bridge
+  internal:
+    name: cvg-internal
+    driver: bridge
+    internal: true
+
+volumes:
+  rfw-data:
+    name: rfw-data
+  caddy-data:
+    name: caddy-data-rfw
+  caddy-config:
+    name: caddy-config-rfw

@@ -1,0 +1,34 @@
+{
+  "_comment": "CVG Rainfall Wizard — Demo Configuration (NOT for regulatory use)",
+  "project_name": "demo_rainfall_miami_100yr",
+  "inputs": {
+    "dem_path": "rainfall_wizard/demo_data/dem.tif",
+    "dem_unit": "m",
+    "dem_nodata": -9999,
+    "aoi_polygon": null
+  },
+  "pfds": {
+    "lat": 25.7617,
+    "lon": -80.1918,
+    "duration": "24h",
+    "return_period": 100,
+    "source": "NOAA Atlas 14 Volume 2"
+  },
+  "runoff": {
+    "curve_number": 75,
+    "storm_type": "III",
+    "area_acres": 100.0,
+    "slope_pct": 0.5,
+    "tc_method": "sheet_shallow_channel"
+  },
+  "processing": {
+    "min_depth_m": 0.1,
+    "output_nodata": -9999.0
+  },
+  "outputs": {
+    "depth_grid": "rainfall_wizard/demo_data/rainfall_depth_100yr.tif",
+    "metadata_json": "rainfall_wizard/demo_data/rainfall_depth_100yr.json",
+    "report_pdf": "rainfall_wizard/demo_data/rainfall_report_100yr.pdf"
+  },
+  "notes": "DEMO CONFIG — synthetic DEM for testing only. Not valid for regulatory submission. Reference: NOAA Atlas 14, NRCS TR-55."
+}

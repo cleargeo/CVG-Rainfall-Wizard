@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<!-- =============================================================================
+     CVG Rainfall Wizard Portal — Dashboard
+     Clearview Geographic LLC — Proprietary and Confidential
+     ADF Build: 1.0.x | HTML5 / Jinja2
+     ============================================================================= -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="120" />
+  <title>CVG Rainfall Wizard — Portal</title>
+  <style>
+    :root { --cvg-blue:#003366; --cvg-teal:#00a499; --cvg-rain:#1565c0; --cvg-light:#f5f7fa; --cvg-border:#d0d7de; --cvg-text:#1c2b3a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--cvg-light); color:var(--cvg-text); }
+    header { background:var(--cvg-blue); color:#fff; padding:1rem 2rem; display:flex; align-items:center; }
+    header h1 { font-size:1.3rem; font-weight:600; }
+    header p { font-size:0.8rem; opacity:0.75; margin-top:0.15rem; }
+    .meta { margin-left:auto; font-size:0.8rem; opacity:0.7; text-align:right; }
+    .container { max-width:1100px; margin:1.5rem auto; padding:0 1rem; display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+    .card { background:#fff; border:1px solid var(--cvg-border); border-radius:8px; padding:1.25rem; }
+    .card.full { grid-column:1/-1; }
+    .card h2 { font-size:0.95rem; color:var(--cvg-blue); margin-bottom:0.85rem; border-bottom:2px solid var(--cvg-teal); padding-bottom:0.35rem; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0.75rem; }
+    .stat { background:var(--cvg-light); border-radius:6px; padding:0.75rem 1rem; text-align:center; }
+    .stat .val { font-size:1.6rem; font-weight:700; color:var(--cvg-blue); }
+    .stat .lbl { font-size:0.76rem; color:#555; margin-top:0.2rem; }
+    .pill { display:inline-block; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.78rem; font-weight:600; }
+    .pill-ok  { background:#d4edda; color:#155724; }
+    .pill-err { background:#f8d7da; color:#721c24; }
+    table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+    th { background:var(--cvg-blue); color:#fff; padding:0.45rem 0.7rem; text-align:left; }
+    td { padding:0.4rem 0.7rem; border-bottom:1px solid var(--cvg-border); }
+    tr:nth-child(even) td { background:#f8fafc; }
+    .btn { display:inline-flex; align-items:center; padding:0.45rem 1rem; border:none; border-radius:4px; font-size:0.85rem; font-weight:600; cursor:pointer; text-decoration:none; }
+    .btn-primary { background:var(--cvg-teal); color:#fff; }
+    .btn-secondary { background:var(--cvg-blue); color:#fff; }
+    .btn-rain { background:var(--cvg-rain); color:#fff; }
+    .btn:hover { opacity:0.85; }
+    input, select { padding:0.45rem 0.7rem; border:1px solid var(--cvg-border); border-radius:4px; font-size:0.88rem; }
+    input:focus, select:focus { outline:none; border-color:var(--cvg-teal); }
+    .pfds-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:0.5rem; align-items:end; }
+    #pfds-result { margin-top:0.75rem; font-size:0.9rem; min-height:2rem; }
+    footer { text-align:center; font-size:0.76rem; color:#888; padding:1.5rem 0; grid-column:1/-1; }
+    @media (max-width:700px) { .container { grid-template-columns:1fr; } .pfds-row { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>&#127783; CVG Rainfall Wizard — Portal Dashboard</h1>
+    <p>Rainfall Wizard API Monitor &amp; Quick-Access Dashboard</p>
+  </div>
+  <div class="meta">
+    Portal v{{ portal_version }}<br>
+    Updated: {{ generated_at }}<br>
+    <span style="opacity:0.6">Auto-refresh: 120 s</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── API Status ──────────────────────────────────────── -->
+  <div class="card">
+    <h2>&#128994; API Status</h2>
+    {% if api_error %}
+      <p><span class="pill pill-err">&#10060; OFFLINE</span> &nbsp; {{ api_error }}</p>
+      <p style="margin-top:0.75rem;font-size:0.82rem;color:#666;">Target: <code>{{ api_url }}</code></p>
+    {% else %}
+      <p><span class="pill pill-ok">&#10003; ONLINE</span> &nbsp; Rainfall Wizard API is reachable</p>
+      {% if api_health %}
+      <div class="stat-grid" style="margin-top:0.85rem;">
+        <div class="stat"><div class="val">{{ api_health.version | default('—') }}</div><div class="lbl">Version</div></div>
+        <div class="stat"><div class="val">{{ history | length }}</div><div class="lbl">Runs (session)</div></div>
+        <div class="stat"><div class="val">{{ api_health.status | default('ok') }}</div><div class="lbl">Status</div></div>
+      </div>
+      {% endif %}
+      <p style="margin-top:0.85rem;font-size:0.82rem;color:#666;">Endpoint: <code>{{ api_url }}</code></p>
+    {% endif %}
+    <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+      <a href="{{ api_url }}/docs" target="_blank" class="btn btn-secondary">API Docs</a>
+      <a href="{{ api_url }}/health" target="_blank" class="btn btn-secondary">Health JSON</a>
+    </div>
+  </div>
+
+  <!-- ── Quick PFDS Lookup ──────────────────────────────── -->
+  <div class="card">
+    <h2>&#127783; Quick PFDS Lookup</h2>
+    <div class="pfds-row">
+      <div>
+        <label style="font-size:0.8rem;font-weight:600;">Latitude</label><br>
+        <input type="number" id="p-lat" value="25.7617" step="0.001" style="width:100%;" />
+      </div>
+      <div>
+        <label style="font-size:0.8rem;font-weight:600;">Longitude</label><br>
+        <input type="number" id="p-lon" value="-80.1918" step="0.001" style="width:100%;" />
+      </div>
+      <div>
+        <label style="font-size:0.8rem;font-weight:600;">Duration</label><br>
+        <select id="p-dur">
+          <option value="6h">6-hr</option><option value="12h">12-hr</option>
+          <option value="24h" selected>24-hr</option><option value="72h">72-hr</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.8rem;font-weight:600;">Return Period</label><br>
+        <select id="p-ari">
+          <option value="25">25-yr</option><option value="50">50-yr</option>
+          <option value="100" selected>100-yr</option><option value="500">500-yr</option>
+        </select>
+      </div>
+      <div>
+        <button class="btn btn-rain" onclick="doPFDS()">&#9654; Fetch</button>
+      </div>
+    </div>
+    <div id="pfds-result" style="color:#555;">Enter coordinates and click Fetch.</div>
+  </div>
+
+  <!-- ── Run History ────────────────────────────────────── -->
+  <div class="card full">
+    <h2>&#128203; Session Run History ({{ history | length }} / 50)</h2>
+    {% if history %}
+    <table>
+      <thead><tr><th>Time</th><th>Type</th><th>Details</th><th>Result</th></tr></thead>
+      <tbody>
+        {% for h in history %}
+        <tr>
+          <td>{{ h.ts }}</td>
+          <td>{{ h.type | upper }}</td>
+          <td>
+            {% if h.type == 'pfds' %}
+              {{ h.lat }}, {{ h.lon }} | {{ h.duration }} | {{ h.return_period }}-yr
+            {% elif h.type == 'runoff' %}
+              CN={{ h.cn }} | P={{ h.rainfall_in }} in | {{ h.storm_type }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if h.type == 'pfds' and h.depth_in is not none %}
+              {{ '%.2f'|format(h.depth_in) }} in
+            {% elif h.type == 'runoff' and h.Q_in is not none %}
+              Q={{ '%.3f'|format(h.Q_in) }} in
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top:0.75rem;">
+      <button class="btn btn-secondary" onclick="clearHistory()">&#128465; Clear History</button>
+    </div>
+    {% else %}
+    <p style="color:#888;font-size:0.88rem;">No runs this session yet. Use the Quick PFDS Lookup above to get started.</p>
+    {% endif %}
+  </div>
+
+  <footer>CVG Rainfall Wizard Portal &mdash; Clearview Geographic LLC &mdash; Proprietary &amp; Confidential</footer>
+
+</div><!-- /.container -->
+
+<script>
+async function doPFDS() {
+  const lat = document.getElementById('p-lat').value;
+  const lon = document.getElementById('p-lon').value;
+  const dur = document.getElementById('p-dur').value;
+  const ari = document.getElementById('p-ari').value;
+  const out = document.getElementById('pfds-result');
+  out.textContent = 'Fetching PFDS data...';
+  out.style.color = '#555';
+  try {
+    const url = `/api/proxy/pfds?lat=${lat}&lon=${lon}&duration=${encodeURIComponent(dur)}&return_period=${ari}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.detail || JSON.stringify(data));
+    const depth = data.depth_in != null ? data.depth_in.toFixed(2) + ' in' : '—';
+    const inten = data.intensity_in_hr != null ? data.intensity_in_hr.toFixed(3) + ' in/hr' : '—';
+    out.innerHTML = `<strong>${dur} / ${ari}-yr:</strong> ${depth} &nbsp; (${inten}) &nbsp;
+      <span style="color:green;font-size:0.82rem;">&#10003; complete</span>`;
+    out.style.color = '#1c2b3a';
+    setTimeout(() => window.location.reload(), 1500);
+  } catch (e) {
+    out.textContent = 'Error: ' + e.message;
+    out.style.color = 'red';
+  }
+}
+async function clearHistory() {
+  await fetch('/api/history', { method: 'DELETE' });
+  window.location.reload();
+}
+</script>
+</body>
+</html>

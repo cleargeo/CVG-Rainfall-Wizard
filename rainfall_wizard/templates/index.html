@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<!-- CVG Rainfall Wizard -- Public Web UI: Rainfall and Runoff Analysis -->
+<!-- Clearview Geographic LLC -- Proprietary and Confidential -->
+<!-- ADF Build: 1.0.x | HTML5 / Jinja2 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CVG Rainfall Wizard</title>
+  <style>
+    :root{--primary:#005ea2;--primary-dk:#004681;--accent:#00a3a6;--accent-dk:#008082;--bg:#f5f7fa;--surface:#fff;--border:#d0d7de;--text:#1c2b3a;--muted:#5a6e80;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;}
+    .site-header{background:var(--primary);color:#fff;padding:.75rem 2rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+    .brand{font-size:.88rem;font-weight:700;letter-spacing:.04em;opacity:.9;white-space:nowrap;}
+    .site-nav{display:flex;gap:.25rem;flex-wrap:wrap;margin-left:auto;}
+    .site-nav a{color:rgba(255,255,255,.82);text-decoration:none;font-size:.82rem;padding:.3rem .75rem;border-radius:3px;transition:background .15s,color .15s;}
+    .site-nav a:hover{background:rgba(255,255,255,.12);color:#fff;}
+    .site-nav a.active{background:rgba(255,255,255,.18);color:#fff;font-weight:600;}
+    .nav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.28rem .7rem;border-radius:3px;font-size:.78rem;font-weight:600;text-decoration:none;}
+    .nav-btn:hover{background:rgba(255,255,255,.25);}
+    .hero{background:linear-gradient(135deg,var(--primary) 0%%,var(--accent) 100%%);color:#fff;padding:3rem 2rem 2.5rem;text-align:center;}
+    .hero-icon{font-size:3rem;line-height:1;margin-bottom:.75rem;}
+    .hero h1{font-size:2rem;font-weight:700;margin-bottom:.5rem;}
+    .hero p{font-size:1.05rem;opacity:.9;margin-bottom:1.25rem;max-width:600px;margin-left:auto;margin-right:auto;}
+    .badges{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;}
+    .badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:.25rem .7rem;border-radius:20px;font-size:.78rem;font-weight:600;}
+    .main{max-width:900px;margin:2.5rem auto 3rem;padding:0 1.25rem;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.75rem;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+    .card-header{display:flex;align-items:center;gap:.65rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid var(--accent);}
+    .card-header h2{font-size:1.05rem;font-weight:700;color:var(--primary);}
+    .card-num{display:inline-flex;align-items:center;justify-content:center;width:1.75rem;height:1.75rem;background:var(--accent);color:#fff;border-radius:50%%;font-size:.8rem;font-weight:700;flex-shrink:0;}
+    .opt-pill{margin-left:auto;font-size:.75rem;color:var(--muted);font-weight:500;background:var(--bg);padding:.2rem .55rem;border-radius:3px;border:1px solid var(--border);}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;}
+    .fg{display:flex;flex-direction:column;gap:.3rem;}
+    .fg.full{grid-column:1/-1;}
+    label{font-size:.82rem;font-weight:600;color:var(--text);}
+    .lbl-opt{font-weight:400;color:var(--muted);font-size:.78rem;}
+    input[type=text],input[type=number],select{padding:.55rem .85rem;border:1px solid var(--border);border-radius:5px;font-size:.9rem;width:100%%;background:#fff;color:var(--text);transition:border-color .15s;}
+    input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,163,166,.18);}
+    .help{font-size:.78rem;color:var(--muted);margin-top:.2rem;line-height:1.4;}
+    .section-help{background:#eef6ff;border-left:3px solid var(--accent);border-radius:0 4px 4px 0;padding:.6rem .9rem;font-size:.82rem;color:#1a4a7a;margin-bottom:1.1rem;}
+    .cn-table{width:100%%;border-collapse:collapse;font-size:.82rem;margin-top:.9rem;}
+    .cn-table th{background:var(--primary);color:#fff;padding:.45rem .75rem;text-align:left;}
+    .cn-table td{padding:.4rem .75rem;border-bottom:1px solid var(--border);}
+    .cn-table tr:nth-child(even) td{background:#f8fafc;}
+    .cn-table caption{font-size:.78rem;color:var(--muted);text-align:left;margin-bottom:.4rem;}
+    details summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;}
+    details summary::-webkit-details-marker{display:none;}
+    .chevron{display:inline-block;width:1.1rem;height:1.1rem;background:var(--accent);color:#fff;border-radius:3px;text-align:center;line-height:1.1rem;font-size:.75rem;font-weight:700;flex-shrink:0;transition:transform .2s;}
+    details[open] .chevron{transform:rotate(90deg);}
+    .details-body{margin-top:1.25rem;}
+    .toggle-row{display:flex;align-items:center;gap:.75rem;padding:.75rem 0;}
+    .sw{position:relative;display:inline-block;width:42px;height:22px;flex-shrink:0;}
+    .sw input{opacity:0;width:0;height:0;}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#bcc8d4;border-radius:22px;transition:background .2s;}
+    .slider::before{content:"";position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+    .sw input:checked+.slider{background:var(--accent);}
+    .sw input:checked+.slider::before{transform:translateX(20px);}
+    #compound-body{display:none;margin-top:1.25rem;}
+    #compound-body.open{display:block;}
+    .submit-row{display:flex;align-items:center;gap:1rem;margin-top:.5rem;flex-wrap:wrap;}
+    .btn-submit{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 2rem;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:1rem;font-weight:700;cursor:pointer;transition:background .15s,transform .1s;text-transform:uppercase;letter-spacing:.04em;}
+    .btn-submit:hover{background:var(--accent-dk);transform:translateY(-1px);}
+    .reset-link{font-size:.82rem;color:var(--muted);text-decoration:none;}
+    .reset-link:hover{color:var(--primary);text-decoration:underline;}
+    .api-card{border-top:3px solid var(--primary);}
+    .api-card h3{font-size:.95rem;font-weight:700;color:var(--primary);margin-bottom:.9rem;}
+    .api-ep{background:#f0f4f8;border:1px solid var(--border);border-radius:5px;padding:.75rem 1rem;margin-bottom:.75rem;}
+    .api-method{display:inline-block;background:var(--accent);color:#fff;font-size:.7rem;font-weight:700;padding:.15rem .45rem;border-radius:3px;letter-spacing:.04em;margin-right:.4rem;}
+    .api-path{font-family:"Consolas",monospace;font-size:.82rem;color:var(--primary);word-break:break-all;}
+    .api-desc{font-size:.78rem;color:var(--muted);margin-top:.3rem;}
+    code{background:#e8edf2;padding:.1rem .35rem;border-radius:3px;font-family:"Consolas",monospace;font-size:.85em;color:#1a4a7a;}
+    input[type=range]{accent-color:var(--accent);}
+    .site-footer{text-align:center;font-size:.78rem;color:var(--muted);padding:2rem 1rem;border-top:1px solid var(--border);}
+    @media(max-width:640px){.form-grid{grid-template-columns:1fr;}.hero h1{font-size:1.5rem;}.main{padding:0 .75rem;}}
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <span class="brand">&#127758; CVG Wizard Suite</span>
+  <nav class="site-nav">
+    <a href="#">&#127754; Storm Surge</a>
+    <a href="#">&#127754; SLR</a>
+    <a href="/" class="active">&#127783; Rainfall</a>
+    <a href="/docs" target="_blank" class="nav-btn">API Docs</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-icon">&#127783;</div>
+  <h1>Rainfall &amp; Runoff Analysis Wizard</h1>
+  <p>NOAA PFDS design storm depths + NRCS TR-55 runoff estimation</p>
+  <div class="badges">
+    <span class="badge">NOAA PFDS</span>
+    <span class="badge">NRCS TR-55</span>
+    <span class="badge">14 Return Periods</span>
+    <span class="badge">Atlas 14</span>
+  </div>
+</section>
+
+<main class="main">
+  <form method="POST" action="/runoff" id="rform">
+
+    <!-- Card 1: Project Location -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-num">1</span>
+        <h2>Project Location</h2>
+      </div>
+      <p class="section-help">Enter your site coordinates. Used to fetch NOAA Precipitation Frequency Data (Atlas 14 / PFDS) for the nearest grid point.</p>
+      <div class="form-grid">
+        <div class="fg">
+          <label for="lat">Latitude <span class="lbl-opt">(decimal degrees)</span></label>
+          <input type="number" id="lat" name="lat" step="0.0001" min="-90" max="90" placeholder="e.g. 25.7617 (Miami)" required />
+          <span class="help">WGS84 decimal degrees. Positive = North.</span>
+        </div>
+        <div class="fg">
+          <label for="lon">Longitude <span class="lbl-opt">(decimal degrees)</span></label>
+          <input type="number" id="lon" name="lon" step="0.0001" min="-180" max="180" placeholder="e.g. -80.1918" required />
+          <span class="help">WGS84 decimal degrees. Negative = West (US sites).</span>
+        </div>
+        <div class="fg full">
+          <label for="project_name">Project Name <span class="lbl-opt">(optional)</span></label>
+          <input type="text" id="project_name" name="project_name" placeholder="e.g. Coral Gables Drainage Improvement" />
+          <span class="help">For report reference only.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Design Storm -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-num">2</span>
+        <h2>Design Storm Parameters</h2>
+      </div>
+      <div class="form-grid">
+        <div class="fg">
+          <label for="return_period_yr">Return Period</label>
+          <select id="return_period_yr" name="return_period_yr">
+            <option value="2">2-year (50%% annual chance)</option>
+            <option value="5">5-year (20%% annual chance)</option>
+            <option value="10">10-year (10%% annual chance)</option>
+            <option value="25">25-year (4%% annual chance)</option>
+            <option value="50">50-year (2%% annual chance)</option>
+            <option value="100" selected>100-year (1%% annual chance)</option>
+            <option value="200">200-year (0.5%% annual chance)</option>
+            <option value="500">500-year (0.2%% annual chance)</option>
+            <option value="1000">1000-year (0.1%% annual chance)</option>
+          </select>
+          <span class="help">100-year storm = 1%% annual chance. Required for FEMA Zone A floodplain analysis.</span>
+        </div>
+        <div class="fg">
+          <label for="duration_hr">Storm Duration</label>
+          <select id="duration_hr" name="duration_hr">
+            <option value="0.5">30-minute</option>
+            <option value="1">1-hour</option>
+            <option value="2">2-hour</option>
+            <option value="3">3-hour</option>
+            <option value="6">6-hour</option>
+            <option value="12">12-hour</option>
+            <option value="24" selected>24-hour (standard)</option>
+            <option value="48">48-hour</option>
+            <option value="72">72-hour (3-day)</option>
+            <option value="96">4-day</option>
+            <option value="168">7-day</option>
+            <option value="240">10-day</option>
+          </select>
+          <span class="help">24-hour duration is standard for most drainage design and FEMA FIRM panels.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Site Characteristics (collapsible) -->
+    <div class="card">
+      <details id="site-details">
+        <summary>
+          <span class="card-num">3</span>
+          <div class="card-header" style="border-bottom:none;margin-bottom:0;padding-bottom:0;flex:1;">
+            <h2>Site Characteristics <span class="opt-pill">Optional &mdash; CN Runoff</span></h2>
+          </div>
+          <span class="chevron">&#9658;</span>
+        </summary>
+        <div class="details-body">
+          <p class="section-help">Providing a Curve Number enables NRCS TR-55 direct runoff depth. Adding drainage area enables peak flow (cfs) estimation. Leave blank for rainfall depth only.</p>
+          <div class="form-grid">
+            <div class="fg">
+              <label for="curve_number">Composite Curve Number (CN) <span class="lbl-opt">(1&ndash;100)</span></label>
+              <input type="number" id="curve_number" name="curve_number" min="1" max="100" step="1" placeholder="e.g. 75" />
+              <span class="help">NRCS TR-55 CN accounts for land use, soil type (HSG A&ndash;D), and cover condition. Higher CN = more runoff.</span>
+            </div>
+            <div class="fg">
+              <label for="drainage_area_acres">Drainage Area <span class="lbl-opt">(acres)</span></label>
+              <input type="number" id="drainage_area_acres" name="drainage_area_acres" min="0.01" step="0.1" placeholder="acres" />
+              <span class="help">Total watershed area. Required for peak flow (cfs).</span>
+            </div>
+          </div>
+          <table class="cn-table">
+            <caption>CN Reference Values (NRCS TR-55 Table 2-2)</caption>
+            <thead><tr><th>Land Use</th><th>Soil B</th><th>Soil C</th><th>Soil D</th></tr></thead>
+            <tbody>
+              <tr><td>Residential 1/4-acre lots</td><td>75</td><td>83</td><td>87</td></tr>
+              <tr><td>Residential 1/2-acre lots</td><td>61</td><td>74</td><td>80</td></tr>
+              <tr><td>Commercial / Business</td><td>92</td><td>94</td><td>95</td></tr>
+              <tr><td>Industrial</td><td>88</td><td>91</td><td>93</td></tr>
+              <tr><td>Wooded, good cover</td><td>55</td><td>70</td><td>77</td></tr>
+              <tr><td>Open space / Grass</td><td>61</td><td>74</td><td>80</td></tr>
+              <tr><td>Impervious surface</td><td>98</td><td>98</td><td>98</td></tr>
+              <tr><td>Wetlands</td><td>78</td><td>82</td><td>86</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+
+    <!-- Card 4: Compound Flood -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-num">4</span>
+        <h2>Compound Flood Analysis <span class="opt-pill">Optional</span></h2>
+      </div>
+      <div class="toggle-row">
+        <label class="sw"><input type="checkbox" id="ctoggle" onchange="toggleCompound(this)" /><span class="slider"></span></label>
+        <div>
+          <div style="font-size:.88rem;font-weight:600;">Combine with Storm Surge &amp; SLR Analysis</div>
+          <div style="font-size:.8rem;color:var(--muted);">Overlay rainfall runoff with coastal storm surge and sea level rise for compound hazard assessment.</div>
+        </div>
+      </div>
+      <div id="compound-body">
+        <div class="form-grid">
+          <div class="fg">
+            <label for="noaa_station">NOAA Tide Gauge Station</label>
+            <select id="noaa_station" name="noaa_station">
+              <option value="">-- Select Station --</option>
+              <option value="8722670">Lake Worth Pier, FL (8722670)</option>
+              <option value="8723170">Miami Beach, FL (8723170)</option>
+              <option value="8724580">Key West, FL (8724580)</option>
+              <option value="8726607">Old Port Tampa, FL (8726607)</option>
+              <option value="8727520">Cedar Key, FL (8727520)</option>
+              <option value="8728690">Apalachicola, FL (8728690)</option>
+              <option value="8729840">Pensacola, FL (8729840)</option>
+              <option value="8720218">Mayport, FL (8720218)</option>
+              <option value="8665530">Charleston, SC (8665530)</option>
+              <option value="8670870">Beaufort, SC (8670870)</option>
+              <option value="8661070">Myrtle Beach, SC (8661070)</option>
+              <option value="8651370">Duck, NC (8651370)</option>
+              <option value="8638610">Sewells Point, VA (8638610)</option>
+              <option value="8574680">Baltimore, MD (8574680)</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label for="slr_scenario">SLR Scenario</label>
+            <select id="slr_scenario" name="slr_scenario">
+              <option value="low">Low (NOAA)</option>
+              <option value="intermediate_low">Intermediate-Low (NOAA)</option>
+              <option value="intermediate" selected>Intermediate (NOAA)</option>
+              <option value="intermediate_high">Intermediate-High (NOAA)</option>
+              <option value="high">High (NOAA)</option>
+              <option value="extreme">Extreme (NOAA)</option>
+            </select>
+          </div>
+          <div class="fg full">
+            <label for="planning_year">Planning Year: <span id="yr-disp">2050</span></label>
+            <input type="range" id="planning_year" name="planning_year" min="2020" max="2100" step="5" value="2050" oninput="document.getElementById('yr-disp').textContent=this.value" style="width:100%%;accent-color:var(--accent);" />
+            <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);"><span>2020</span><span>2050</span><span>2075</span><span>2100</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <button type="submit" class="btn-submit">&#127783; Calculate Runoff</button>
+      <a href="/" class="reset-link">&#8635; Reset form</a>
+    </div>
+
+  </form>
+
+  <!-- API Quick Reference -->
+  <div class="card api-card" style="margin-top:2.5rem;">
+    <h3>&#9881;&#65039; API Quick Reference</h3>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">All endpoints available via REST API. No authentication required.</p>
+    <div class="api-ep">
+      <div><span class="api-method">GET</span><span class="api-path">/api/pfds?lat=25.76&amp;lon=-80.19&amp;return_period_yr=100&amp;duration_hr=24</span></div>
+      <div class="api-desc">NOAA Atlas 14 PFDS depth for a single duration and return period at a coordinate.</div>
+    </div>
+    <div class="api-ep">
+      <div><span class="api-method">GET</span><span class="api-path">/api/pfds/table?lat=25.76&amp;lon=-80.19</span></div>
+      <div class="api-desc">Full IDF table &mdash; all durations x all return periods at a coordinate.</div>
+    </div>
+    <div class="api-ep">
+      <div><span class="api-method">GET</span><span class="api-path">/api/runoff?cn=75&amp;rainfall_in=8.5&amp;ia_ratio=0.2</span></div>
+      <div class="api-desc">NRCS TR-55 runoff depth. Returns Q, S, Ia, runoff fraction, volume.</div>
+    </div>
+    <div class="api-ep">
+      <div><span class="api-method">POST</span><span class="api-path">/api/run</span></div>
+      <div class="api-desc">Full rainfall + DEM depth-grid analysis. JSON body: lat, lon, dem_path, return_period_yr, duration_hr, curve_number.</div>
+    </div>
+    <p style="margin-top:.9rem;font-size:.8rem;color:var(--muted);">Full docs: <a href="/docs" target="_blank" style="color:var(--primary);">Swagger UI (/docs)</a> &mdash; <a href="/redoc" target="_blank" style="color:var(--primary);">ReDoc (/redoc)</a></p>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  CVG Rainfall Wizard v{{ version }} &mdash; &copy; Clearview Geographic, LLC &mdash; Proprietary &amp; Confidential &mdash; NOAA Atlas 14 &bull; NRCS TR-55
+</footer>
+
+<script>
+function toggleCompound(cb){document.getElementById('compound-body').classList.toggle('open',cb.checked);}
+if(navigator.geolocation){
+  var l=document.getElementById('lat'),o=document.getElementById('lon');
+  if(!l.value&&!o.value){
+    navigator.geolocation.getCurrentPosition(
+      function(p){l.value=p.coords.latitude.toFixed(4);o.value=p.coords.longitude.toFixed(4);},
+      function(){}
+    );
+  }
+}
+</script>
+</body>
+</html>

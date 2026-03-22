@@ -1,0 +1,18 @@
+[flake8]
+# =============================================================================
+# CVG Rainfall Wizard — flake8 configuration
+# =============================================================================
+max-line-length = 100
+extend-ignore = E203, W503, E501
+exclude =
+    __pycache__,
+    .git,
+    .venv,
+    build,
+    dist,
+    *.egg-info,
+    rainfall_wizard/cache,
+    rainfall_wizard/demo_data,
+per-file-ignores =
+    rainfall_wizard/__init__.py: F401
+    tests/*: F401, F811
